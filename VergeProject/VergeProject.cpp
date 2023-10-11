@@ -129,11 +129,45 @@ double optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
     int allVisitedMask = (1 << numNodes/2) - 1;
 
     // {curNode, bit mask, weight
-    std::queue<std::pair<int, std::pair<int, float>>> queue;
+    std::queue<std::pair<int, std::pair<int, double>>> queue;
     // Each row is a different path. Each row has 5 elements to match the bitmask
     std::vector<std::vector<bool>> visited(allVisitedMask + 1, std::vector<bool>(numNodes / 2, false));
+
+    // Start by adding all the nodes to our queue. We can probably once again force a start at the 0
+    // or 1 node because the graph is complete, but let's keep it simple for now
+    for (int i = 0; i < numNodes / 2; i++)
+    {
+        int initialMask = 1 << i;
+        queue.push({ i, {initialMask, 0.0} });
+        visited[initialMask][i] = true;
+    }
+
+    while (!queue.empty())
+    {
+        auto curNodePair = queue.front();
+        queue.pop();
+
+        int curNode = curNodePair.first;
+        int curMask = curNodePair.second.first;
+        double weight = curNodePair.second.second;
+
+        if (curMask == allVisitedMask)
+        {
+            return weight;
+        }
+
+        for (int node = 0; node < numNodes/2; node++)
+        {
+            int newMask = curMask | (1 << node);
+            if (!visited[newMask][node])
+            {
+                visited[newMask][node] = true;
+                queue.push({ node, {newMask, distanceMatrix[curNode][node]} });
+            }
+        }
+    }
     
-    return 1;
+    return -1;
 }
 
 int main()
