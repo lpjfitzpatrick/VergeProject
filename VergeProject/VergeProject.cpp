@@ -35,7 +35,6 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
 
     if (numNodes == 0) return -2.0;
 
-    double pathWeight = 0;
     std::vector<bool> visited(numNodes, false);
 
     // Build a map to keep track of node pairs
@@ -54,8 +53,8 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     std::priority_queue<weightNodes, vecWeightNodes, std::greater<weightNodes>> pq2;
 
     // We can arbitrarily start from the first node pair (0 & 1). Figure out which is best
-    double minWeight = -1;
-    std::pair<double, std::pair<int, int>> startingNode{0.0, { 0, 0 }};
+    // Assuming the weights will never be negative in this loop
+    std::pair<double, std::pair<int, int>> startingNode{-1.0, { 0, 0 }};
     for (int i = 0; i < 2; i++)
     {
         for (int j = 0; j < numNodes; j++)
@@ -63,14 +62,18 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
             if (i == j) continue;
             if (mapNodePairs[i] == j) continue;
             double weight = distanceMatrix[i][j];
-            if (minWeight < 0 || weight < minWeight)
+            
+            if (startingNode.first < 0 || weight < startingNode.first)
             {
-                minWeight = weight;
-                startingNode.second.first = i;
+                startingNode.first = weight;
+                startingNode.second.first = j;
                 startingNode.second.second = i;
             }
         }
     }
+    visited[0] = true;
+    visited[1] = true;
+
 
     pq2.push(startingNode);
 
@@ -80,6 +83,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     // Then we add the weight to our path total and then add all other edge weights leading to
     // new nodes to our queue.
     int lastNode = startingNode.second.second;
+    double pathWeight = 0;
     while (!pq2.empty())
     {
         auto curNodePair = pq2.top();
