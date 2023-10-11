@@ -33,6 +33,8 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     // a square matrix but I'll leave it out
     if (numNodes % 2 != 0) return -1.0;
 
+    if (numNodes == 0) return -2.0;
+
     double pathWeight = 0;
     std::vector<bool> visitied(numNodes, false);
 
