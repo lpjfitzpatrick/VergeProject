@@ -46,15 +46,16 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
         mapNodePairs[i + 1] = i;
     }
 
-    typedef std::vector<std::pair<double, int>> vecPair;
-    // Organize data by {weight, toNode}
+    typedef std::pair<double, std::pair<int, int>> weightNodes;
+    typedef std::vector <weightNodes> vecWeightNodes;
+    // Organize data by {weight, {toNode, fromNode}}
     // By default a pq will put the largest weight first (pair.first). Use std::greater to make
     // it by the lowest weight first (See cppreference.com page on priority queue)
-    std::priority_queue<std::pair<double, int>, vecPair, std::greater<std::pair<double, int>>> pq;
+    std::priority_queue<weightNodes, vecWeightNodes, std::greater<weightNodes>> pq2;
 
     // We can arbitrarily start from the first node pair (0 & 1). Figure out which is best
     double minWeight = -1;
-    std::pair<double, int> startingNode{0.0, 0};
+    std::pair<double, std::pair<int, int>> startingNode{0.0, { 0, 0 }};
     for (int i = 0; i < 2; i++)
     {
         for (int j = 0; j < numNodes; j++)
@@ -65,37 +66,42 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
             if (minWeight < 0 || weight < minWeight)
             {
                 minWeight = weight;
-                startingNode.second = i;
+                startingNode.second.first = i;
+                startingNode.second.second = i;
             }
         }
     }
 
-    // Note the node we start from won't necessarily be the start of the list as the alg considers
-    // past edge weights even after finding the best node to get to from the starting node.
-    pq.push(startingNode);
+    pq2.push(startingNode);
 
     // We get the current node we are at (top of list). If we've already been there then skip it.
-    // Else we add the weight to our path total and then add all other edge weights leading to
+    // Also if the node leading to our current node (fromNode) is not the last node we visited skip it
+    // (we could get a spanning tree otherwise)
+    // Then we add the weight to our path total and then add all other edge weights leading to
     // new nodes to our queue.
-    while (!pq.empty())
+    int lastNode = startingNode.second.second;
+    while (!pq2.empty())
     {
-        auto curNodePair = pq.top();
-        pq.pop();
+        auto curNodePair = pq2.top();
+        pq2.pop();
 
-        int curNode = curNodePair.second;
+        int curNode = curNodePair.second.first;
+        int fromNode = curNodePair.second.second;
         double weight = curNodePair.first;
 
         if (visited[curNode] || visited[mapNodePairs[curNode]]) continue;
+        if (fromNode != lastNode) continue;
 
         pathWeight += weight;
         visited[curNode] = true;
         visited[mapNodePairs[curNode]] = true;
+        lastNode = curNode;
 
         for (int node = 0; node < numNodes; node++)
         {
             if (!visited[node] || !visited[mapNodePairs[node]])
             {
-                pq.push({ distanceMatrix[curNode][node], node });
+                pq2.push({ distanceMatrix[curNode][node], {node, curNode} });
             }
         }
     }
@@ -123,5 +129,17 @@ int main()
         { 6.1, 2.0, 10.5, 1.6, 10.6, 7.7, 8.3, 11.4, 0.0, 1.1 },
         { 7.0, 1.0, 11.5, 1.1, 11.6, 8.5, 9.3, 12.4, 1.1, 0.0 } };
 
-    std::cout << minPath(test2) << std::endl;
+    std::vector<std::vector<double>> test3{
+        { 0.0, 8.1, 9.2, 7.7, 9.3, 2.3, 5.1, 10.2, 6.1, 7.0},
+        { 8.1, 0.0, 12.0, 0.9, 12.0, 1.2, 10.1, 12.8, 2.0, 1.0 },
+        { 9.2, 12.0, 0.0, 11.2, 0.7, 11.1, 8.1, 1.1, 10.5, 11.5 },
+        { 7.7, 0.9, 11.2, 0.0, 11.2, 9.2, 9.5, 12.0, 1.6, 1.1 },
+        { 9.3, 12.0, 0.7, 11.2, 0.0, 11.2, 8.5, 1.0, 10.6, 11.6 },
+        { 2.3, 1.2, 11.1, 9.2, 11.2, 0.0, 5.6, 12.1, 7.7, 8.5 },
+        { 5.1, 10.1, 8.1, 9.5, 8.5, 5.6, 0.0, 9.1, 8.3, 9.3 },
+        { 10.2, 12.8, 1.1, 12.0, 1.0, 12.1, 9.1, 0.0, 11.4, 12.4 },
+        { 6.1, 2.0, 10.5, 1.6, 10.6, 7.7, 8.3, 11.4, 0.0, 1.1 },
+        { 7.0, 1.0, 11.5, 1.1, 11.6, 8.5, 9.3, 12.4, 1.1, 0.0 } };
+
+    std::cout << minPath(test3) << std::endl;
 }
