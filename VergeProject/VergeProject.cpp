@@ -33,7 +33,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     // a square matrix but I'll leave it out
     if (numNodes % 2 != 0) return -1.0;
 
-    double fPathWeight = 0;
+    double pathWeight = 0;
     std::vector<bool> visitied(numNodes, false);
 
     // Build a map to keep track of node pairs
@@ -68,7 +68,35 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
         }
     }
 
-    return 1;
+    pq.push(startingNode);
+
+    // We get the current node we are at (top of list). If we've already been there then skip it.
+    // Else we add the weight to our path total and then add all other edge weights leading to
+    // new nodes to our queue.
+    while (!pq.empty())
+    {
+        auto curNodePair = pq.top();
+        pq.pop();
+
+        int curNode = curNodePair.second;
+        double weight = curNodePair.first;
+
+        if (visitied[curNode] || visitied[mapNodePairs[curNode]]) continue;
+
+        pathWeight += weight;
+        visitied[curNode] = true;
+        visitied[mapNodePairs[curNode]] = true;
+
+        for (int node = 0; node < numNodes; node++)
+        {
+            if (!visitied[node] || !visitied[mapNodePairs[node]])
+            {
+                pq.push({ distanceMatrix[curNode][node], node });
+            }
+        }
+    }
+
+    return pathWeight;
 }
 
 int main()
