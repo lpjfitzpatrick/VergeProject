@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <vector>
+#include <queue>
+#include <map>
 
 // This below way will not always give the best solution, but I believe it should ways get a
 // feasible one. To get the best solution maybe we have to use a bitmask. I might look into that
@@ -21,22 +23,61 @@
 // We can use a priority queue to keep the smallest weight edge at the front of our queue. This
 // should give constant access time and then we can take that edge if it leads somewhere that hasn't
 // been visited yet.
-float minPath(const std::vector<std::vector<float>>& distanceMatrix)
+double minPath(const std::vector<std::vector<double>>& distanceMatrix)
 {
-    int numNodes = distanceMatrix.size();
+    int numNodes = static_cast<int>(distanceMatrix.size());
 
     // We could maybe assume this would never happen since the problem specifies that the graph
     // will always be complete with an even number of nodes, but it is quick and easy to check for
     // odd. We could also verify completeness by checking the size of each column to ensure we have
     // a square matrix but I'll leave it out
-    if (numNodes % 2 != 0) return -1;
+    if (numNodes % 2 != 0) return -1.0;
+
+    double fPathWeight = 0;
+    std::vector<bool> visitied(numNodes, false);
+
+    // Build a map to keep track of node pairs
+    std::map<int, int> mapNodePairs;
+    for (int i = 0; i < numNodes; i += 2)
+    {
+        mapNodePairs[i] = i + 1;
+        mapNodePairs[i + 1] = i;
+    }
+
+    typedef std::vector<std::pair<double, int>> vecPair;
+    // Organize data by {weight, toNode}
+    // By default a pq will put the largest weight first (pair.first). Use std::greater to make
+    // it by the lowest weight first (See cppreference.com page on priority queue)
+    std::priority_queue<std::pair<double, int>, vecPair, std::greater<std::pair<double, int>>> pq;
+
+    // We can arbitrarily start from the first node pair (0 & 1). Figure out which is best
+    double minWeight = -1;
+    std::pair<double, int> startingNode{0.0, 0};
+    for (int i = 0; i < 2; i++)
+    {
+        for (int j = 0; j < numNodes; j++)
+        {
+            if (i == j) continue;
+            if (mapNodePairs[i] == j) continue;
+            double weight = distanceMatrix[i][j];
+            if (minWeight < 0 || weight < minWeight)
+            {
+                minWeight = weight;
+                startingNode.second = i;
+            }
+        }
+    }
 
     return 1;
 }
 
 int main()
 {
-    std::vector<std::vector<float>> test(4, std::vector<float>(4, 0));
+    std::vector<std::vector<double>> test{
+        { 0.0, 1.5, 2.7, 1.2 },
+        { 1.5, 0.0, 4.6, 1.1 },
+        { 2.7, 4.6, 0.0, 1.0 },
+        { 1.2, 1.1, 1.0, 0.0 }, };
 
     minPath(test);
 }
