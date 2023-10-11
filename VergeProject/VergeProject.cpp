@@ -8,6 +8,9 @@
 // feasible one. To get the best solution maybe we have to use a bitmask. I might look into that
 // after I get the first way working
 
+// Another observation is this matrix is symmetric along the diagonal. That could allow for some optimizations
+// but I will not focus on that for getting a working solution.
+
 // One way is to use a BFS and greedily choose the best (smallest weight) edge from a starting node
 // The starting node can be any node on the graph since we know the graph is complete (and
 // will always be able to get to every node once without backtracking). But since we are considering
