@@ -36,7 +36,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     if (numNodes == 0) return -2.0;
 
     double pathWeight = 0;
-    std::vector<bool> visitied(numNodes, false);
+    std::vector<bool> visited(numNodes, false);
 
     // Build a map to keep track of node pairs
     std::map<int, int> mapNodePairs;
@@ -83,15 +83,15 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
         int curNode = curNodePair.second;
         double weight = curNodePair.first;
 
-        if (visitied[curNode] || visitied[mapNodePairs[curNode]]) continue;
+        if (visited[curNode] || visited[mapNodePairs[curNode]]) continue;
 
         pathWeight += weight;
-        visitied[curNode] = true;
-        visitied[mapNodePairs[curNode]] = true;
+        visited[curNode] = true;
+        visited[mapNodePairs[curNode]] = true;
 
         for (int node = 0; node < numNodes; node++)
         {
-            if (!visitied[node] || !visitied[mapNodePairs[node]])
+            if (!visited[node] || !visited[mapNodePairs[node]])
             {
                 pq.push({ distanceMatrix[curNode][node], node });
             }
