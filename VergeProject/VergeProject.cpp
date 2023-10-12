@@ -4,31 +4,40 @@
 #include <queue>
 #include <unordered_map>
 
-// This below way will not always give the best solution, but I believe it should ways get a
-// feasible one. To get the best solution maybe we have to use a bitmask. I might look into that
-// after I get the first way working
+// Shortest path problems are hard!
+// I present two methods:
 
-// Another observation is this matrix is symmetric along the diagonal. That could allow for some optimizations
-// but I will not focus on that for getting a working solution.
+//The first method I attempted is easier and I knew it would not return
+// the optimal soluntion but I wanted something that for sure worked. It is essentially
+// a BFS alg and I greedily choose the smallest weight edge from an arbitrary starting node pair.
+// The graph is complete so in theory starting from any node would give the same result (except
+// that the greedy nature of the alg may prevent that).
+// We keep track of where we've been with a vector of bools and use a priority queue to
+// always be able to easily access the "best greedily choosen" path from the front of the queue
 
-// One way is to use a BFS and greedily choose the best (smallest weight) edge from a starting node
-// The starting node can be any node on the graph since we know the graph is complete (and
-// will always be able to get to every node once without backtracking). But since we are considering
-// node in pairs, we can pick any pair and then pick the best edge from edges in that pair. The
-// node which has that edge will be our start.
-// We keep track of what has been visisted using a vector of bools. Visited one entry in a pair
-// will visited both.
-// We can use a priority queue to keep the smallest weight edge at the front of our queue. This
-// should give constant access time and then we can take that edge if it leads somewhere that hasn't
-// been visited yet.
+// The second method using a bitmask. I put this together having having a working greedy method
+// that always returns a feasible solution. I think this solution is optimal (though I cannot be
+// certain), but it is more costly.
+// The main idea is you can use a bitmask to track all possible paths, and by storing the correct
+// information (path weight, etc) and some tricky logic, you can compile all feasible paths
+// and from them determine which is shortest
+
+// An observation: this distanceMatrix graph is symmetric due to being complete. There may be
+// optimizations one can make from this structure but it's not something I considered in my
+// algorithms
+
+// A final note: I used a more common ("standard" ?) variable naming scheme (camelCase) for minPath(...)
+// For optimalPath(..) (mainly since I also used classes/structs) I decided to use Hungarian Notation
+// as this is what I used at my last job. E.g. dWeight denotes weight is a double.
+
 double minPath(const std::vector<std::vector<double>>& distanceMatrix)
 {
     int numNodes = static_cast<int>(distanceMatrix.size());
 
-    // We could maybe assume this would never happen since the problem specifies that the graph
-    // will always be complete with an even number of nodes, but it is quick and easy to check for
-    // odd. We could also verify completeness by checking the size of each column to ensure we have
-    // a square matrix but I'll leave it out
+    // We could assume this would never happen since the problem specifies that the graph
+    // will always be complete with an even number of nodes, but it is quick and easy to check for a
+    // odd number. We could also verify completeness by checking the size of each column to ensure
+    // we have a square matrix but I'll leave that out as an assumption of always true
     if (numNodes % 2 != 0) return -1.0;
 
     if (numNodes == 0) return -2.0;
@@ -50,7 +59,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     // it by the lowest weight first (See cppreference.com page on priority queue)
     std::priority_queue<weightNodes, vecWeightNodes, std::greater<weightNodes>> pq2;
 
-    // We can arbitrarily start from the first node pair (0 & 1). Figure out which is best
+    // We can arbitrarily start from the first node pair (0 & 1). Figure out which is best.
     // Assuming the weights will never be negative in this loop
     std::pair<double, std::pair<int, int>> startingNode{-1.0, { 0, 0 }};
     for (int i = 0; i < 2; i++)
@@ -75,9 +84,10 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
 
     pq2.push(startingNode);
 
-    // We get the current node we are at (top of list). If we've already been there then skip it.
-    // Also if the node leading to our current node (fromNode) is not the last node we visited skip it
-    // (we could get a spanning tree otherwise)
+    // We get the current node we are at (top of list).
+    // If we've already been there (or to its pair) then skip it.
+    // Also if the node leading to our current node (fromNode) is not the last node we visited skip it (we could
+    // get a spanning tree otherwise).
     // Then we add the weight to our path total and then add all other edge weights leading to
     // new nodes to our queue.
     int lastNode = startingNode.second.second;
@@ -111,15 +121,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     return pathWeight;
 }
 
-// I will also try to do what I think should give an optimal solution using a bit mask.
-// Idea is if we had 5 nodes, we could use 5 bits to track if each one has been visited. We can pair this with a weight,
-// and each unique weight + bit mask route tells us a unique path around the graph. Once we have visited all nodes,
-// we have the weight for that route and we should be able to find the smallest amongst all the routes.
-
-// In this example we have an even number of nodes and nodes are in pairs. I'm not 100% sure yet but I think that means
-// we would want to use a 5 bit bit mask if we had 10 nodes. Then when all bits are 1 we have visited each of the pairs.
-// I think the unique weights should differentiate them.
-// We need to avoid revisiting the same node as well
+// OPTIMAL MIN ALG STARTS HERE
 
 // I used two classes/structs for this nethod. Depending on the context of where/how small classes like this
 // might be used, you could either make a simple struct where everything is public or a more standard class
@@ -161,6 +163,11 @@ private:
     std::vector<bool> m_vVis;
     double m_dPathWeight;
 };
+
+// The main idea behind the optimal min method is to use a bitmask
+// to keep track of all possible paths and then use some logic to
+// not backtrack on nodes or visit more than one node in a node pair.
+// We also track the weight of the paths as we go.
 
 double optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
 {
