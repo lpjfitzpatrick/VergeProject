@@ -1,10 +1,8 @@
 // VergeProject.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <vector>
 #include <queue>
-#include <map>
+#include <unordered_map>
 
 // This below way will not always give the best solution, but I believe it should ways get a
 // feasible one. To get the best solution maybe we have to use a bitmask. I might look into that
@@ -38,7 +36,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     std::vector<bool> visited(numNodes, false);
 
     // Build a map to keep track of node pairs
-    std::map<int, int> mapNodePairs;
+    std::unordered_map<int, int> mapNodePairs;
     for (int i = 0; i < numNodes; i += 2)
     {
         mapNodePairs[i] = i + 1;
@@ -122,52 +120,135 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
 // we would want to use a 5 bit bit mask if we had 10 nodes. Then when all bits are 1 we have visited each of the pairs.
 // I think the unique weights should differentiate them.
 // We need to avoid revisiting the same node as well
+
+// I used two classes/structs for this nethod. Depending on the context of where/how small classes like this
+// might be used, you could either make a simple struct where everything is public or a more standard class
+// that properly utilizes encapsulation with private data and accessors. I've just shown both ways.
+
+struct NodePath
+{
+    NodePath(int iCurNode, int iBitMask, double weight, int numVisited, const std::vector<int> & vPath = {}) :
+        m_iCurNode{ iCurNode }, m_iBitMask{ iBitMask }, m_dWeight{ weight }, m_numVisited{ numVisited }, m_vPath{vPath}
+    {
+        m_vPath.push_back(iCurNode);
+    }
+
+    int m_iCurNode;
+    int m_iBitMask;
+    double m_dWeight;
+    int m_numVisited;
+    std::vector<int> m_vPath;
+};
+
+class VisitedPathWeights
+{
+public:
+    VisitedPathWeights(int numNodes) : m_dPathWeight{ 0.0 }
+    {
+        for (int i = 0; i < numNodes; ++i)
+        {
+            m_vVis.push_back(false);
+        }
+    }
+
+    double getPathWeight() { return m_dPathWeight; }
+    bool isNodeVisited(int node) { return m_vVis[node]; }
+
+    void setPathWeight(double dWeight) { m_dPathWeight = dWeight; }
+    void setNodeVisited(int iNode, bool bIsVisit) { m_vVis[iNode] = bIsVisit; }
+
+private:
+    std::vector<bool> m_vVis;
+    double m_dPathWeight;
+};
+
 double optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
 {
     int numNodes = static_cast<int>(distanceMatrix.size());
-    // So for 10 nodes we get 31 which in bits is [1 1 1 1 1]
-    int allVisitedMask = (1 << numNodes/2) - 1;
 
-    // {curNode, bit mask, weight
-    std::queue<std::pair<int, std::pair<int, double>>> queue;
-    // Each row is a different path. Each row has 5 elements to match the bitmask
-    std::vector<std::vector<bool>> visited(allVisitedMask + 1, std::vector<bool>(numNodes / 2, false));
+    if (numNodes % 2 != 0) return -2.0;
 
-    // Start by adding all the nodes to our queue. We can probably once again force a start at the 0
-    // or 1 node because the graph is complete, but let's keep it simple for now
-    for (int i = 0; i < numNodes / 2; i++)
+    // Vec to store all possible bitmask combinations. Store each one as a "VisitedPathWeight" so that
+    // for each potential bitmask path, we can track the smallest weight used to reach it (since the
+    // same bitmask can be hit by following nodes in different orders)
+    int numTotalPaths = (1 << numNodes) - 1;
+    std::vector<VisitedPathWeights> visited(numTotalPaths + 1, numNodes);
+
+    // As previously, a map to track our node pairs
+    std::unordered_map<int, int> mapNodePairs;
+    for (int i = 0; i < numNodes; i += 2)
     {
-        int initialMask = 1 << i;
-        queue.push({ i, {initialMask, 0.0} });
-        visited[initialMask][i] = true;
+        mapNodePairs[i] = i + 1;
+        mapNodePairs[i + 1] = i;
     }
 
+    // Since we have to check all possible paths, I don't believe using a priority queue gives any benefit
+    // A standard FIFO queue allows for faster insertion.
+    // Store a NodePath which allows us to access the current node at the end of our path, its bitmask,
+    // the weight of said path, how many nodes we've visited, and full path itself in vector format
+    // (We could access some of this info from the stored vector but the stored vector was added later on
+    // and also it's simplier to access it from a stored variable
+    std::queue<NodePath> queue;
+
+    // Add all nodes to our queue as each could start the best path
+    for (int i = 0; i < numNodes; i++)
+    {
+        int initialMask = 1 << i;
+        queue.push({ i, initialMask, 0.0, 1 });
+        visited[initialMask].setNodeVisited(i, true);
+        visited[initialMask].setPathWeight(0.0);
+    }
+
+    // Assuming no negatives by using a negative weight as my default for min weight tracking
+    double dMinWeight = -1;
     while (!queue.empty())
     {
-        auto curNodePair = queue.front();
+        auto curNodePath = queue.front();
         queue.pop();
 
-        int curNode = curNodePair.first;
-        int curMask = curNodePair.second.first;
-        double weight = curNodePair.second.second;
+        int iCurNode = curNodePath.m_iCurNode;
+        int iCurMask = curNodePath.m_iBitMask;
+        double dWeight = curNodePath.m_dWeight;
+        int iCurNumVisited = curNodePath.m_numVisited;
 
-        if (curMask == allVisitedMask)
+        if (iCurNumVisited == numNodes / 2)
         {
-            return weight;
+            if (dMinWeight < 0.0 || dWeight < dMinWeight)
+            {
+                dMinWeight = dWeight;
+            }
         }
 
-        for (int node = 0; node < numNodes/2; node++)
+        for (int node = 0; node < numNodes; node++)
         {
-            int newMask = curMask | (1 << node);
-            if (!visited[newMask][node])
+            // The logic below took a lot of trial and error to work out:
+            // - If the node we are looping over is already in the path, we ignore it. I'm using std::find for this over a stored path
+            //   but there might be a way to do this using the bitmask and visited array. (I couldn't figure out how but it would save
+            //   a few seconds (the path array is size numNodes/2 at most so its not too bad)
+            // - If on our current path (checked using bitmask), we see that nodes pair has been visited, we ignore it. This
+            //   for instance stops a path of 0 -> 2 -> 1 from happening (0 -> 2 has bitmask 5 and the 0th node will be visited already)
+            // - Compute the new mask and new weight that this mask (path) will have
+            // - If the new mask (path) has already exisited/been visited where the next element on the path is node, ignore it
+            //   unless (OR) we have visited this path before but this "new" way of reaching this path (i.e. nodes in a different
+            //   order) has a lower cost.
+            // - All above satisied: we update the new path visited vecor, set its best weight, update num nodes visited and
+            //   add it to the queue
+            if (std::find(curNodePath.m_vPath.begin(), curNodePath.m_vPath.end(), node) != std::end(curNodePath.m_vPath)) continue;
+            if (visited[iCurMask].isNodeVisited(mapNodePairs[node])) continue;
+
+            int iNewMask = iCurMask | (1 << node);
+            double dNewWeight = dWeight + distanceMatrix[iCurNode][node];
+            if (!visited[iNewMask].isNodeVisited(node) || dNewWeight < visited[iNewMask].getPathWeight())
             {
-                visited[newMask][node] = true;
-                queue.push({ node, {newMask, distanceMatrix[curNode][node]} });
+                visited[iNewMask].setNodeVisited(node, true);
+                visited[iNewMask].setPathWeight(dNewWeight);
+                int newNumVisited = iCurNumVisited + 1;
+                queue.push({ node, iNewMask, dNewWeight, newNumVisited, curNodePath.m_vPath });
             }
         }
     }
-    
-    return -1;
+
+    return dMinWeight;
 }
 
 int main()
@@ -190,6 +271,6 @@ int main()
         { 6.1, 2.0, 10.5, 1.6, 10.6, 7.7, 8.3, 11.4, 0.0, 1.1 },
         { 7.0, 1.0, 11.5, 1.1, 11.6, 8.5, 9.3, 12.4, 1.1, 0.0 } };
 
-    optimalMin(test);
-    //std::cout << minPath(test) << std::endl;
+    std::cout << minPath(test) << std::endl;
+    std::cout << optimalMin(test) << std::endl;
 }
