@@ -169,11 +169,11 @@ private:
 // not backtrack on nodes or visit more than one node in a node pair.
 // We also track the weight of the paths as we go.
 
-double optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
+std::pair<double, std::vector<int>> optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
 {
     int numNodes = static_cast<int>(distanceMatrix.size());
 
-    if (numNodes % 2 != 0) return -2.0;
+    if (numNodes % 2 != 0) return { -2.0, {} };
 
     // Vec to store all possible bitmask combinations. Store each one as a "VisitedPathWeight" so that
     // for each potential bitmask path, we can track the smallest weight used to reach it (since the
@@ -208,6 +208,7 @@ double optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
 
     // Assuming no negatives by using a negative weight as my default for min weight tracking
     double dMinWeight = -1;
+    std::vector<int> vMinPath = {};
     while (!queue.empty())
     {
         auto curNodePath = queue.front();
@@ -223,6 +224,7 @@ double optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
             if (dMinWeight < 0.0 || dWeight < dMinWeight)
             {
                 dMinWeight = dWeight;
+                vMinPath = curNodePath.m_vPath;
             }
         }
 
@@ -255,7 +257,7 @@ double optimalMin(const std::vector<std::vector<double>>& distanceMatrix)
         }
     }
 
-    return dMinWeight;
+    return { dMinWeight, vMinPath };
 }
 
 int main()
@@ -279,5 +281,5 @@ int main()
         { 7.0, 1.0, 11.5, 1.1, 11.6, 8.5, 9.3, 12.4, 1.1, 0.0 } };
 
     std::cout << minPath(test) << std::endl;
-    std::cout << optimalMin(test) << std::endl;
+    std::cout << optimalMin(test).first << std::endl;
 }
