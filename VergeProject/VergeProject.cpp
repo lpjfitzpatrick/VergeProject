@@ -30,7 +30,7 @@
 // For optimalPath(..) (mainly since I also used classes/structs) I decided to use Hungarian Notation
 // as this is what I used at my last job. E.g. dWeight denotes weight is a double.
 
-double minPath(const std::vector<std::vector<double>>& distanceMatrix)
+std::pair<double, std::vector<int>> minPath(const std::vector<std::vector<double>>& distanceMatrix)
 {
     int numNodes = static_cast<int>(distanceMatrix.size());
 
@@ -38,9 +38,9 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     // will always be complete with an even number of nodes, but it is quick and easy to check for a
     // odd number. We could also verify completeness by checking the size of each column to ensure
     // we have a square matrix but I'll leave that out as an assumption of always true
-    if (numNodes % 2 != 0) return -1.0;
+    if (numNodes % 2 != 0) return { -1.0, { } };
 
-    if (numNodes == 0) return -2.0;
+    if (numNodes == 0) return { -2.0, { } };
 
     std::vector<bool> visited(numNodes, false);
 
@@ -92,6 +92,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
     // new nodes to our queue.
     int lastNode = startingNode.second.second;
     double pathWeight = 0;
+    std::vector<int> vMinPath = {lastNode};
     while (!pq2.empty())
     {
         auto curNodePair = pq2.top();
@@ -104,6 +105,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
         if (visited[curNode] || visited[mapNodePairs[curNode]]) continue;
         if (fromNode != lastNode) continue;
 
+        vMinPath.push_back(curNode);
         pathWeight += weight;
         visited[curNode] = true;
         visited[mapNodePairs[curNode]] = true;
@@ -118,7 +120,7 @@ double minPath(const std::vector<std::vector<double>>& distanceMatrix)
         }
     }
 
-    return pathWeight;
+    return { pathWeight, vMinPath };
 }
 
 // OPTIMAL MIN ALG STARTS HERE
@@ -280,6 +282,6 @@ int main()
         { 6.1, 2.0, 10.5, 1.6, 10.6, 7.7, 8.3, 11.4, 0.0, 1.1 },
         { 7.0, 1.0, 11.5, 1.1, 11.6, 8.5, 9.3, 12.4, 1.1, 0.0 } };
 
-    std::cout << minPath(test) << std::endl;
+    std::cout << minPath(test).first << std::endl;
     std::cout << optimalMin(test).first << std::endl;
 }

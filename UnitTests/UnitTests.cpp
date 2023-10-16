@@ -20,13 +20,14 @@ namespace UnitTests
 			{ 2.7, 4.6, 0.0, 1.0 },
 			{ 1.2, 1.1, 1.0, 0.0 }, };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 			auto opt = optimalMin(test);
 
-			Assert::AreEqual(min, 1.1);
+			Assert::AreEqual(min.first, 1.1);
 			Assert::AreEqual(opt.first, 1.1);
 
 			std::vector<int> expected = { 1, 3 };
+			Assert::IsTrue(min.second == expected, L"Expected result is {1, 3}");
 			Assert::IsTrue(opt.second == expected, L"Expected result is {1, 3}");
 		}
 
@@ -40,13 +41,14 @@ namespace UnitTests
 				{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }, 
 				{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }, };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 			auto opt = optimalMin(test);
 
-			Assert::AreEqual(min, 0.0);
+			Assert::AreEqual(min.first, 0.0);
 			Assert::AreEqual(opt.first, 0.0);
 
 			std::vector<int> expected = { 0, 2, 4 };
+			Assert::IsTrue(min.second == expected, L"Expected result is {0, 2, 4}");
 			Assert::IsTrue(opt.second == expected, L"Expected result is {0, 2, 4}");
 		}
 
@@ -57,13 +59,14 @@ namespace UnitTests
 				{ 0.0, 1.5, },
 				{ 1.5, 0.0, }, };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 			auto opt = optimalMin(test);
 
-			Assert::AreEqual(min, 0.0);
+			Assert::AreEqual(min.first, 0.0);
 			Assert::AreEqual(opt.first, 0.0);
 
 			std::vector<int> expected = { 0 };
+			Assert::IsTrue(min.second == expected, L"Expected result is {0}");
 			Assert::IsTrue(opt.second == expected, L"Expected result is {0}");
 		}
 
@@ -75,13 +78,14 @@ namespace UnitTests
 			// Especially if these were both production level functions where logging error values matter for tracking bugs etc
 			std::vector<std::vector<double>> test{ };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 			auto opt = optimalMin(test);
 
-			Assert::AreEqual(min, -2.0);
+			Assert::AreEqual(min.first, -2.0);
 			Assert::AreEqual(opt.first, -1.0);
 
 			std::vector<int> expected = { };
+			Assert::IsTrue(min.second == expected, L"Expected result is { }");
 			Assert::IsTrue(opt.second == expected, L"Expected result is { }");
 		}
 
@@ -93,13 +97,14 @@ namespace UnitTests
 			std::vector<std::vector<double>> test{
 				{ 0.0 } };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 			auto opt = optimalMin(test);
 
-			Assert::AreEqual(min, -1.0);
+			Assert::AreEqual(min.first, -1.0);
 			Assert::AreEqual(opt.first, -2.0);
 
 			std::vector<int> expected = { };
+			Assert::IsTrue(min.second == expected, L"Expected result is { }");
 			Assert::IsTrue(opt.second == expected, L"Expected result is { }");
 		}
 
@@ -118,14 +123,16 @@ namespace UnitTests
 				{ 0.5, 2.0, 1.5, 2.0, 0.0, 2.0 },
 				{ 2.0, 2.0, 2.0, 2.0, 2.0, 0.0 }, };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 			auto opt = optimalMin(test);
 
-			Assert::AreEqual(min, 2.0);
+			Assert::AreEqual(min.first, 2.0);
 			Assert::AreEqual(opt.first, 1.5);
 
-			std::vector<int> expected = { 2, 0, 4 };
-			Assert::IsTrue(opt.second == expected, L"Expected result is {2, 0, 4}");
+			std::vector<int> expected = { 0, 4, 2 };
+			std::vector<int> optExpected = { 2, 0, 4 };
+			Assert::IsTrue(min.second == expected, L"Expected result is {0, 2 ,4}");
+			Assert::IsTrue(opt.second == optExpected, L"Expected result is {2, 0, 4}");
 		}
 
 		TEST_METHOD(TenByTen)
@@ -144,9 +151,12 @@ namespace UnitTests
 				{ 6.1, 2.0, 10.5, 1.6, 10.6, 7.7, 8.3, 11.4, 0.0, 1.1 },
 				{ 7.0, 1.0, 11.5, 1.1, 11.6, 8.5, 9.3, 12.4, 1.1, 0.0 } };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 
-			Assert::IsTrue(std::abs(min - 16.1) < thresh);
+			Assert::IsTrue(std::abs(min.first - 16.1) < thresh);
+
+			std::vector<int> expected = { 1, 3, 9, 5, 6 };
+			Assert::IsTrue(min.second == expected, L"Expected result is {1, 3, 9, 5, 6}");
 		}
 
 		TEST_METHOD(OptimalTenByTen)
@@ -192,9 +202,12 @@ namespace UnitTests
 				{ 6.1, 2.0, 10.5, 1.6, 10.6, 7.7, 8.3, 11.4, 0.0, 1.1 },
 				{ 7.0, 1.0, 11.5, 1.1, 11.6, 8.5, 9.3, 12.4, 1.1, 0.0 } };
 
-			double min = minPath(test);
+			auto min = minPath(test);
 
-			Assert::IsTrue(std::abs(min - 16.1) < thresh);
+			Assert::IsTrue(std::abs(min.first - 16.1) < thresh);
+
+			std::vector<int> expected = { 1, 3, 9, 5, 6 };
+			Assert::IsTrue(min.second == expected, L"Expected result is {1, 3, 9, 5, 6}");
 		}
 
 		TEST_METHOD(OptimalModifiedTenByTen)
@@ -249,9 +262,12 @@ namespace UnitTests
 				{ 9.9, 4.8, 1.9, 5.0, 3.5, 4.2, 1.1, 6.2, 1.4, 2.9, 4.6, 8.6, 8.0, 2.5, 7.1, 6.7, 3.9, 2.3, 0.0, 5.1, }, // 18
 				{ 3.3, 2.7, 8.5, 9.1, 1.5, 4.4, 8.1, 2.4, 5.0, 7.7, 8.2, 3.0, 4.7, 9.5, 2.8, 1.2, 4.0, 6.8, 5.1, 0.0, }, };// 19
 
-			double min = minPath(test);
+			auto min = minPath(test);
 
-			Assert::IsTrue(std::abs(min - 12.6) < thresh);
+			Assert::IsTrue(std::abs(min.first - 12.6) < thresh);
+
+			std::vector<int> expected = { 0, 2, 12, 16, 5, 7, 15, 19, 11, 9 };
+			Assert::IsTrue(min.second == expected, L"Expected result is {0, 2, 12, 16, 5, 7, 15, 19, 11, 9}");
 		}
 
 		TEST_METHOD(OptimalTwentyByTwenty)
